@@ -47,4 +47,4 @@ jobs:
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --port ${{ env.PORT }} \
-            --update-secrets S3_API_KEY=WASABI_KEY:latest,TELEGRAM_BOT_TOKEN=BETA_TELEGRAM_BOT_TOKEN:latest
+            --update-secrets S3_API_KEY=WASABI_KEY:latest,TELEGRAM_BOT_TOKEN=BETA_TELEGRAM_BOT_TOKEN:latest,API_KEY=PREVIEW_GENERATOR_KEY:latest
