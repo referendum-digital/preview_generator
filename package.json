@@ -1,0 +1,14 @@
+{
+  "name": "preview_maker",
+  "version": "0.0.1",
+  "description": "Preview generator for referendum",
+  "main": "server.js",
+  "repository": "git@github.com:referendum-digital/preview_maker.git",
+  "author": "alex <alex@techpro.studio>",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}
