@@ -60,7 +60,7 @@ app.post("/generate", (req, res, next) => {
     // https://docs.wasabi.com/docs/how-do-i-use-aws-sdk-for-javascript-v3-with-wasabi here is link how to integrate wasabi via s3 api.
 
     // if req success return {"ok": 1} if not return error {"error": "description of error"}
-
+    return res.status(200).json({"ok": 1});
 });
 
 
