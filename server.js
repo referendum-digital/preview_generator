@@ -1,7 +1,9 @@
-import express from "express";
-import { createServer } from "node:http";
+import express from 'express';
+import puppeteer from 'puppeteer';
+import stream from 'stream';
+
 // List of required environment variables
-const requiredEnvVars = ['API_KEY', 'TELEGRAM_BOT_TOKEN', 'S3_API_KEY'];
+const requiredEnvVars = ['API_KEY'];
 
 // Function to check environment variables
 function checkEnvVariables() {
@@ -18,10 +20,6 @@ function checkEnvVariables() {
 checkEnvVariables();
 
 const app = express();
-const httpServer = createServer(app);
-
-app.use(express.json());
-
 const port = process.env.PORT || 3000;
 
 function authenticateRequest(req, res, next) {
@@ -34,37 +32,66 @@ function authenticateRequest(req, res, next) {
     next();
 }
 
-
 app.use(authenticateRequest);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.post("/generate", (req, res, next) => {
-    let question = req.body["question"];
-    let owner = req.body["owner"];
-    let referendumId = req.body["referendum_id"];
+let browser;
 
-    let avatar = req.body["avatar_telegram_file_id"];
-    // either this either that should be specified to fetch avatar
-    let avatarURL = req.body["avatar_url"];
+// Initialize Puppeteer browser
+(async () => {
+    browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'], // For environments like Docker
+    });
+})();
 
-    // provide validations for all values and return error if form incorrect
-    // It should generate html using some template with parameters from body
-    // template save in repo
-    // it should look like example.png
-    // no need to make it perfect, lets build somehow, and fix template later. for more information on preview ask Bogdan.
+app.post('/generate', async (req, res) => {
+    const { htmlContent } = req.body;
 
+    if (!htmlContent) {
+        return res.status(400).send('htmlContent is required');
+    }
 
-    // after success generating html it should be converted to image with size 1200 * 630 or 800 * 419
-    // and should be saved in wasabi storage (it is the same like amazon s3. it uses amazon s3 api, just different base url.) API key for wasabi I will provide
-    // is should save in bucket /referendum_previews/referendumId
+    try {
+        const page = await browser.newPage();
 
-    // https://docs.wasabi.com/docs/how-do-i-use-aws-sdk-for-javascript-v3-with-wasabi here is link how to integrate wasabi via s3 api.
+        // Set viewport size if needed
+        await page.setViewport({ width: 1200, height: 630 });
 
-    // if req success return {"ok": 1} if not return error {"error": "description of error"}
-    return res.status(200).json({"ok": 1});
+        // Set content
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        // Screenshot options
+        const imageBuffer = await page.screenshot({
+            type: 'png',
+            fullPage: true,
+        });
+
+        await page.close();
+
+        const readStream = new stream.PassThrough();
+
+        readStream.end(imageBuffer);
+
+        res.set("Content-disposition", 'attachment; filename=' + "image.png");
+        res.set("Content-Type", "image/png");
+
+        readStream.pipe(res);
+
+    } catch (error) {
+        console.error('Error generating image:', error);
+        res.status(500).json({'error': 'Error generating image'});
+    }
 });
 
+app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+});
 
-
-httpServer.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+    if (browser) {
+        await browser.close();
+    }
+    process.exit();
 });
