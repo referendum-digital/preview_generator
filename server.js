@@ -63,8 +63,7 @@ app.post('/generate', async (req, res) => {
 
         // Screenshot options
         const imageBuffer = await page.screenshot({
-            type: 'png',
-            fullPage: true,
+            type: 'png'
         });
 
         await page.close();
