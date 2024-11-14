@@ -46,17 +46,25 @@ let browser;
 })();
 
 app.post('/generate', async (req, res) => {
-    const { htmlContent } = req.body;
+    const { htmlContent, width, height } = req.body;
 
     if (!htmlContent) {
         return res.status(400).send('htmlContent is required');
+    }
+
+    if (!width) {
+        return res.status(400).send('width is required');
+    }
+
+    if (!height) {
+        return res.status(400).send('height is required');
     }
 
     try {
         const page = await browser.newPage();
 
         // Set viewport size if needed
-        await page.setViewport({ width: 1200, height: 630 });
+        await page.setViewport({ width: width, height: height });
 
         // Set content
         await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
