@@ -32,6 +32,11 @@ function authenticateRequest(req, res, next) {
     next();
 }
 
+// Health check endpoint (no authentication required)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 app.use(authenticateRequest);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
